@@ -1,23 +1,23 @@
 ###############################################
 #
-# install alpine with docker in qemu x86_64
+# Install alpine with docker in qemu aarch64
 #
 
-# Wait enough (forever) until a long-time boot
+# Wait till system is ready
 set timeout -1
 
-# load the answerfile
+# Load answerfile
 set answerfile [exec cat ./answerfile]
 
-# create the install dir
+# Create the install dir
 spawn mkdir -p "$env(INSTALLATION_DIR)"
 
-# copy the scripts to the install dir
+# Copy the scripts to the install dir
 expect "$"
-spawn cp startqemu.sh "$env(INSTALLATION_DIR)"
+spawn cp start-qemu.sh "$env(INSTALLATION_DIR)"
 
 expect "$"
-spawn cp ssh2qemu.sh "$env(INSTALLATION_DIR)"
+spawn cp ssh-qemu.sh "$env(INSTALLATION_DIR)"
 
 spawn curl -v -L -o "$env(INSTALLATION_DIR)/alpine.iso" -C - $env(ALPINE_ISO_URL)
 expect "left intact"
@@ -31,7 +31,7 @@ expect "\[SHA256\]"
 set qemukey [exec cat "$env(INSTALLATION_DIR)/qemukey.pub"]
 
 #
-# install the system
+# Install the system
 #
 
 spawn rm -f "$env(INSTALLATION_DIR)/alpine.img"
@@ -39,11 +39,17 @@ spawn qemu-img create -f qcow2 "$env(INSTALLATION_DIR)/alpine.img" $env(DISK_SIZ
 expect "alpine.img"
 
 sleep 5
-spawn qemu-system-x86_64 -machine q35 -m 1024 -smp cpus=2 -cpu qemu64 \
-   -drive if=pflash,format=raw,read-only=on,file=$env(PREFIX)/share/qemu/edk2-x86_64-code.fd \
-   -netdev user,id=n1,hostfwd=tcp::2222-:22 -device virtio-net,netdev=n1 \
-   -cdrom "$env(INSTALLATION_DIR)/alpine.iso" \
-   -nographic "$env(INSTALLATION_DIR)/alpine.img"
+spawn qemu-system-aarch64 \
+    -machine virt \
+    -cpu cortex-a72 \
+    -m 2048 \
+    -smp 8 \
+    -drive if=pflash,format=raw,read-only=on,file=$env(PREFIX)/share/qemu/edk2-aarch64-code.fd \
+    -netdev user,id=n1,dns=8.8.8.8,hostfwd=tcp::2222-:22 \
+    -device virtio-net,netdev=n1 \
+    -cdrom "$env(INSTALLATION_DIR)/alpine.iso" \
+    -nographic \
+    "$env(INSTALLATION_DIR)/alpine.img"
 
 set qemuID $spawn_id
 
@@ -123,10 +129,17 @@ expect "$"
 #
 # setup the system
 #
-spawn qemu-system-x86_64 -machine q35 -m 1024 -smp cpus=2 -cpu qemu64 \
-   -drive if=pflash,format=raw,read-only=on,file=$env(PREFIX)/share/qemu/edk2-x86_64-code.fd \
-   -netdev user,id=n1,hostfwd=tcp::2222-:22 -device virtio-net,netdev=n1 \
-   -nographic "$env(INSTALLATION_DIR)/alpine.img"
+spawn qemu-system-aarch64 \
+    -machine virt \
+    -cpu cortex-a72 \
+    -m 2048 \
+    -smp 8 \
+    -drive if=pflash,format=raw,read-only=on,file=$env(PREFIX)/share/qemu/edk2-aarch64-code.fd \
+    -netdev user,id=n1,dns=8.8.8.8,hostfwd=tcp::2222-:22 \
+    -device virtio-net,netdev=n1 \
+    -cdrom "$env(INSTALLATION_DIR)/alpine.iso" \
+    -nographic \
+    "$env(INSTALLATION_DIR)/alpine.img"
 
 set qemuID $spawn_id
 
@@ -162,24 +175,6 @@ send "service docker start\r"
 
 expect "#"
 send "rc-update add docker\r"
-
-expect "#"
-send "apk add zram-init\r"
-
-# fix broken zram init script
-expect "#"
-send "sed -i -E 's/num_devices=2/num_devices=1/' /etc/conf.d/zram-init\r"
-expect "#"
-send "sed -i -E 's/^algo0=zstd/algo0=lzo/' /etc/conf.d/zram-init\r"
-
-expect "#"
-send "service zram-init start\r"
-
-expect "#"
-send "rc-update add zram-init\r"
-
-expect "#"
-send "sed -i -E 's/^algo0=zstd/algo0=lzo/' /etc/conf.d/zram-init\r"
 
 expect "#"
 send "mkdir -p /root/.ssh\r"

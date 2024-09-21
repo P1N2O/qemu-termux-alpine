@@ -6,7 +6,6 @@ Original idea: <https://gist.github.com/oofnikj/e79aef095cd08756f7f26ed244355d62
 
 This is a automatic installation script. As RAM is always an issue on a cell phone, we also install zram.
 
-
 ## Android Phone/Tablet with Termux
 
 - Learn about wake locks in Termux: <https://wiki.termux.com/wiki/Termux-wake-lock>
@@ -14,8 +13,8 @@ This is a automatic installation script. As RAM is always an issue on a cell pho
 ### Quick Install
 
 ```bash
-$ bash -c "$(curl -fsSL https://raw.githubusercontent.com/egandro/docker-qemu-arm/master/termux-setup.sh)"
-# change you alpine root passwort or run the custom installer!
+$ bash -c "$(curl -fsSL https://raw.githubusercontent.com/P1N2O/qemu-termux-apline/main/termux-setup.sh)"
+# change you alpine root password or run the custom installer!
 ```
 
 ### Custom Install
@@ -34,12 +33,12 @@ $ ./install.sh
 
 ```bash
 $ $HOME/alpine
-$ ./startqemu.sh
+$ ./start-qemu.sh
 ```
 
 ## Postinstall & fun
 
-- you can ssh to the VM with a 2nd Terminal and `ssh2qemu.sh` qemukey / qemukey.ssh are the generated SSH keys
+- you can ssh to the VM with a 2nd Terminal and `ssh-qemu.sh` qemukey / qemukey.ssh are the generated SSH keys
 - run a `uname -a` and a `docker run hello-world`
 
 ## Thanks
@@ -78,4 +77,3 @@ alpine:~# service docker start
 - added config.env - this makes it much simpler for developers to tweak version numbers
 - fixed issue with alpine for zram
 - updated to alpine-virt-3.14.0-x86_64.iso
-
